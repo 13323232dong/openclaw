@@ -52,6 +52,18 @@ Excludes by default:
 Only when the user explicitly wants sensitive disaster recovery state too.
 May include credentials, devices, identity, telegram state. Prefer a private repo and optional encryption.
 
+### encrypted-sensitive
+Recommended for secret material.
+
+Uses OpenSSL AES-256-CBC with PBKDF2 and stores an encrypted archive in the backup repo.
+Typical contents:
+- `~/.openclaw/credentials/`
+- `~/.openclaw/devices/`
+- `~/.openclaw/identity/`
+- `~/.openclaw/telegram/`
+- selected `auth.json`, `auth-profiles.json*`, and `cookies*.json`
+- `TOOLS.md` and selected secret-bearing workspace files
+
 ## Backup
 
 ```bash
