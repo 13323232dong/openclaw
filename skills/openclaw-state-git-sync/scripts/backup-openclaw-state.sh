@@ -76,6 +76,48 @@ copy_path "$SRC_WORKSPACE/memory/" "workspace-clawd/memory/"
 copy_path "$SRC_WORKSPACE/skills/" "workspace-clawd/skills/"
 
 find "$DEST" -type d \( -name logs -o -name browser -o -name canvas -o -name media -o -name delivery-queue \) -prune -exec rm -rf {} + || true
+
+python3 - <<'PY' "$DEST"
+import os, re, sys
+root = sys.argv[1]
+text_exts = {'.md','.txt','.json','.jsonl','.yaml','.yml','.env','.cfg','.conf','.ini','.sh','.py','.ts','.js'}
+patterns = [
+    (re.compile(r'(gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]+)'), '[REDACTED_GITHUB_TOKEN]'),
+    (re.compile(r'(sk-[A-Za-z0-9\-_]{20,})'), '[REDACTED_OPENAI_KEY]'),
+    (re.compile(r'(xai-[A-Za-z0-9\-_]{10,}|xai[A-Za-z0-9\-_]{10,})'), '[REDACTED_XAI_KEY]'),
+    (re.compile(r'(tvly-[A-Za-z0-9\-_]{10,})'), '[REDACTED_TAVILY_KEY]'),
+    (re.compile(r'(moltbook_sk_[A-Za-z0-9\-_]+)'), '[REDACTED_MOLTBOOK_KEY]'),
+    (re.compile(r'(GOCSPX-[A-Za-z0-9\-_]+)'), '[REDACTED_GOOGLE_CLIENT_SECRET]'),
+]
+line_keywords = re.compile(r'(password|passwd|api\s*key|client\s*secret|token|refresh\s*token|access\s*token|密码|密钥|令牌)', re.I)
+for dirpath, _, filenames in os.walk(root):
+    for name in filenames:
+        path = os.path.join(dirpath, name)
+        _, ext = os.path.splitext(name.lower())
+        if ext not in text_exts:
+            continue
+        try:
+            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                s = f.read()
+            orig = s
+            for pat, repl in patterns:
+                s = pat.sub(repl, s)
+            lines = []
+            changed = False
+            for line in s.splitlines(True):
+                if line_keywords.search(line) and ':' in line:
+                    prefix, _ = line.split(':', 1)
+                    line = prefix + ': [REDACTED]\n'
+                    changed = True
+                lines.append(line)
+            s2 = ''.join(lines)
+            if s2 != orig or changed:
+                with open(path, 'w', encoding='utf-8') as f:
+                    f.write(s2)
+        except Exception:
+            pass
+PY
+
 cat > "$DEST/SNAPSHOT.json" <<EOF
 {"createdAt":"$STAMP","profile":"$PROFILE"}
 EOF
