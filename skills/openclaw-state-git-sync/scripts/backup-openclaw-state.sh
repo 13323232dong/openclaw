@@ -32,7 +32,9 @@ rm -rf "$DEST"
 mkdir -p "$DEST/home-openclaw" "$DEST/workspace-clawd"
 
 copy_path() {
-  local src="$1" rel="$2" dest="$DEST/$rel"
+  local src="$1"
+  local rel="$2"
+  local dest="$DEST/$rel"
   if [[ -e "$src" ]]; then
     mkdir -p "$(dirname "$dest")"
     rsync -a --delete \
@@ -46,7 +48,9 @@ copy_path() {
 }
 
 copy_file() {
-  local src="$1" rel="$2" dest="$DEST/$rel"
+  local src="$1"
+  local rel="$2"
+  local dest="$DEST/$rel"
   if [[ -f "$src" ]]; then
     mkdir -p "$(dirname "$dest")"
     cp -f "$src" "$dest"
